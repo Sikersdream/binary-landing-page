@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Binary, BCD & Logic Gates Learning</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Courier New', monospace;
+      background-color: #121212;
+      color: #00ffcc;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 2em;
+      color: #0ff;
+    }
+    .section {
+      margin: 2em 0;
+      padding: 1em;
+      border: 2px solid #00ffcc;
+      border-radius: 10px;
+      background-color: #1e1e1e;
+    }
+    .counter-display {
+      font-size: 1.5em;
+      margin: 1em 0;
+    }
+    button, select {
+      background-color: #00ffcc;
+      color: #121212;
+      padding: 10px 20px;
+      font-size: 1em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover, select:hover {
+      background-color: #00e6b8;
+    }
+    .quiz input {
+      padding: 8px;
+      font-size: 1em;
+    }
+    .bit-toggle {
+      display: inline-block;
+      margin: 5px;
+      font-size: 1.5em;
+      width: 40px;
+      height: 40px;
+      line-height: 40px;
+      background-color: #333;
+      border: 2px solid #00ffcc;
+      border-radius: 5px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .bit-toggle.on {
+      background-color: #00ffcc;
+      color: #121212;
+    }
+    table {
+      margin: 1em auto;
+      border-collapse: collapse;
+    }
+    table, th, td {
+      border: 1px solid #00ffcc;
+      padding: 10px;
+    }
+    th {
+      background-color: #00ffcc;
+      color: #121212;
+    }
+  </style>
+</head>
+<body>
+  <h1>🤖 Learn Binary, BCD & Logic Gates</h1>
+
+  <div class="section">
+    <h2>Progress Tracker</h2>
+    <p>Correct: <span id="score-correct">0</span> | Incorrect: <span id="score-incorrect">0</span> | Accuracy: <span id="score-accuracy">0%</span></p>
+  </div>
+
+  <div class="section">
+    <h2>Binary & BCD Counter</h2>
+    <div class="counter-display" id="decimal">Decimal: 0</div>
+    <div class="counter-display" id="binary">Binary: 0000</div>
+    <div class="counter-display" id="bcd">BCD: 0000</div>
+    <button onclick="increment()">Count +1</button>
+    <button onclick="reset()">Reset</button>
+  </div>
+
+  <div class="section">
+    <h2>Interactive Bit Switches</h2>
+    <div id="bit-switches"></div>
+    <div class="counter-display" id="bit-result">Decimal: 0 | BCD: 0000</div>
+  </div>
+
+  <div class="section">
+    <h2>Logic Gates Playground</h2>
+    <button onclick="toggleInput('A')" id="inputA">A: 0</button>
+    <button onclick="toggleInput('B')" id="inputB">B: 0</button>
+    <br/>
+    <select id="gate" onchange="evaluateGate()">
+      <option value="AND">AND</option>
+      <option value="OR">OR</option>
+      <option value="NOT">NOT (A only)</option>
+      <option value="NAND">NAND</option>
+      <option value="NOR">NOR</option>
+      <option value="XOR">XOR</option>
+      <option value="XNOR">XNOR</option>
+    </select>
+    <div class="counter-display" id="gate-result">Result: 0</div>
+  </div>
+
+  <div class="section">
+    <h2>Logic Gate Truth Tables</h2>
+    <div id="truth-tables"></div>
+  </div>
+
+  <div class="section">
+    <h2>Quiz Time!</h2>
+    <div>
+      <p>Binary → Decimal: <span id="quiz-b2d"></span></p>
+      <input id="answer-b2d" type="number">
+      <button onclick="checkB2D()">Check</button>
+      <p id="feedback-b2d"></p>
+    </div>
+    <div>
+      <p>Decimal → Binary: <span id="quiz-d2b"></span></p>
+      <input id="answer-d2b" type="text">
+      <button onclick="checkD2B()">Check</button>
+      <p id="feedback-d2b"></p>
+    </div>
+    <div>
+      <p>Decimal → BCD: <span id="quiz-d2bcd"></span></p>
+      <input id="answer-d2bcd" type="text">
+      <button onclick="checkD2BCD()">Check</button>
+      <p id="feedback-d2bcd"></p>
+    </div>
+    <div>
+      <p>BCD → Decimal: <span id="quiz-bcd2d"></span></p>
+      <input id="answer-bcd2d" type="number">
+      <button onclick="checkBCD2D()">Check</button>
+      <p id="feedback-bcd2d"></p>
+    </div>
+    <div>
+      <p>BCD → Binary: <span id="quiz-bcd2b"></span></p>
+      <input id="answer-bcd2b" type="text">
+      <button onclick="checkBCD2B()">Check</button>
+      <p id="feedback-bcd2b"></p>
+    </div>
+  </div>
+
+  <script>
+    let count = 0;
+    let bitArray = [0, 0, 0, 0];
+    let inputA = 0;
+    let inputB = 0;
+    let correct = 0;
+    let incorrect = 0;
+
+    function toBCD(num) {
+      return num.toString().split('').map(d => parseInt(d).toString(2).padStart(4, '0')).join(' ');
+    }
+
+    function updateDisplays() {
+      document.getElementById("decimal").textContent = `Decimal: ${count}`;
+      document.getElementById("binary").textContent = `Binary: ${count.toString(2).padStart(4, '0')}`;
+      document.getElementById("bcd").textContent = `BCD: ${toBCD(count)}`;
+    }
+
+    function updateProgress(isCorrect) {
+      if (isCorrect) correct++;
+      else incorrect++;
+      const total = correct + incorrect;
+      const acc = total ? Math.round((correct / total) * 100) : 0;
+      document.getElementById("score-correct").textContent = correct;
+      document.getElementById("score-incorrect").textContent = incorrect;
+      document.getElementById("score-accuracy").textContent = acc + '%';
+    }
+
+    function increment() { count++; updateDisplays(); }
+    function reset() { count = 0; updateDisplays(); }
+
+    function renderBitSwitches() {
+      const container = document.getElementById("bit-switches");
+      container.innerHTML = "";
+      for (let i = 0; i < bitArray.length; i++) {
+        const div = document.createElement("div");
+        div.textContent = bitArray[i];
+        div.className = "bit-toggle" + (bitArray[i] ? " on" : "");
+        div.onclick = () => {
+          bitArray[i] = bitArray[i] ? 0 : 1;
+          renderBitSwitches();
+          updateBitDisplay();
+        };
+        container.appendChild(div);
+      }
+    }
+
+    function updateBitDisplay() {
+      const val = parseInt(bitArray.join(""), 2);
+      document.getElementById("bit-result").textContent = `Decimal: ${val} | BCD: ${toBCD(val)}`;
+    }
+
+    function toggleInput(which) {
+      if (which === 'A') {
+        inputA = inputA ? 0 : 1;
+        document.getElementById("inputA").textContent = `A: ${inputA}`;
+      } else {
+        inputB = inputB ? 0 : 1;
+        document.getElementById("inputB").textContent = `B: ${inputB}`;
+      }
+      evaluateGate();
+    }
+
+    function evaluateGate() {
+      const gate = document.getElementById("gate").value;
+      let result = 0;
+      switch (gate) {
+        case "AND": result = inputA & inputB; break;
+        case "OR": result = inputA | inputB; break;
+        case "NOT": result = inputA ? 0 : 1; break;
+        case "NAND": result = !(inputA & inputB) ? 1 : 0; break;
+        case "NOR": result = !(inputA | inputB) ? 1 : 0; break;
+        case "XOR": result = inputA ^ inputB; break;
+        case "XNOR": result = !(inputA ^ inputB) ? 1 : 0; break;
+      }
+      document.getElementById("gate-result").textContent = `Result: ${result}`;
+    }
+
+    function truthTables() {
+      const gates = {
+        AND: (a, b) => a & b,
+        OR: (a, b) => a | b,
+        NAND: (a, b) => !(a & b) ? 1 : 0,
+        NOR: (a, b) => !(a | b) ? 1 : 0,
+        XOR: (a, b) => a ^ b,
+        XNOR: (a, b) => !(a ^ b) ? 1 : 0,
+      };
+      const out = [];
+      for (let [name, op] of Object.entries(gates)) {
+        out.push(`<table><thead><tr><th colspan='3'>${name}</th></tr><tr><th>A</th><th>B</th><th>Y</th></tr></thead><tbody>`);
+        for (let a = 0; a <= 1; a++) {
+          for (let b = 0; b <= 1; b++) {
+            out.push(`<tr><td>${a}</td><td>${b}</td><td>${op(a,b)}</td></tr>`);
+          }
+        }
+        out.push(`</tbody></table>`);
+      }
+      out.push(`<table><thead><tr><th colspan='2'>NOT</th></tr><tr><th>A</th><th>Y</th></tr></thead><tbody><tr><td>0</td><td>1</td></tr><tr><td>1</td><td>0</td></tr></tbody></table>`);
+      document.getElementById("truth-tables").innerHTML = out.join('');
+    }
+
+    function refreshQuizzes() {
+      const b2d = Math.floor(Math.random() * 16);
+      const d2b = Math.floor(Math.random() * 16);
+      const d2bcd = Math.floor(Math.random() * 100);
+      const bcd2d = Math.floor(Math.random() * 100);
+
+      document.getElementById("quiz-b2d").textContent = b2d.toString(2);
+      document.getElementById("quiz-d2b").textContent = d2b;
+      document.getElementById("quiz-d2bcd").textContent = d2bcd;
+      document.getElementById("quiz-bcd2d").textContent = toBCD(bcd2d);
+      document.getElementById("quiz-bcd2b").textContent = toBCD(bcd2d);
+
+      window.checkB2D = () => {
+        const ans = parseInt(document.getElementById("answer-b2d").value);
+        const isCorrect = ans === b2d;
+        document.getElementById("feedback-b2d").textContent = isCorrect ? "✅ Correct!" : `❌ It's ${b2d}`;
+        updateProgress(isCorrect);
+        refreshQuizzes();
+      };
+      window.checkD2B = () => {
+        const ans = document.getElementById("answer-d2b").value;
+        const isCorrect = ans === d2b.toString(2);
+        document.getElementById("feedback-d2b").textContent = isCorrect ? "✅ Correct!" : `❌ It's ${d2b.toString(2)}`;
+        updateProgress(isCorrect);
+        refreshQuizzes();
+      };
+      window.checkD2BCD = () => {
+        const ans = document.getElementById("answer-d2bcd").value.replace(/\s+/g, '');
+        const correctAns = toBCD(d2bcd).replace(/\s+/g, '');
+        const isCorrect = ans === correctAns;
+        document.getElementById("feedback-d2bcd").textContent = isCorrect ? "✅ Correct!" : `❌ It's ${toBCD(d2bcd)}`;
+        updateProgress(isCorrect);
+        refreshQuizzes();
+      };
+      window.checkBCD2D = () => {
+        const ans = parseInt(document.getElementById("answer-bcd2d").value);
+        const isCorrect = ans === bcd2d;
+        document.getElementById("feedback-bcd2d").textContent = isCorrect ? "✅ Correct!" : `❌ It's ${bcd2d}`;
+        updateProgress(isCorrect);
+        refreshQuizzes();
+      };
+      window.checkBCD2B = () => {
+        const ans = document.getElementById("answer-bcd2b").value;
+        const isCorrect = ans === bcd2d.toString(2);
+        document.getElementById("feedback-bcd2b").textContent = isCorrect ? "✅ Correct!" : `❌ It's ${bcd2d.toString(2)}`;
+        updateProgress(isCorrect);
+        refreshQuizzes();
+      };
+    }
+
+    updateDisplays();
+    renderBitSwitches();
+    updateBitDisplay();
+    evaluateGate();
+    truthTables();
+    refreshQuizzes();
+  </script>
+</body>
+</html>
